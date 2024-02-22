@@ -1,0 +1,34 @@
+{
+  "name": "to-do_list",
+  "version": "1.0.0",
+  "description": "to-do_list pour projet BTS SIO SLAM 2024",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdrienDEBREUILLY/To-do_List.git"
+  },
+  "keywords": [
+    "to-do",
+    "task",
+    "node.js",
+    "projet",
+    "BTS",
+    "SIO",
+    "SLAM"
+  ],
+  "author": "Adrien DEBREUILLY",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AdrienDEBREUILLY/To-do_List/issues"
+  },
+  "homepage": "https://github.com/AdrienDEBREUILLY/To-do_List#readme",
+  "dependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}

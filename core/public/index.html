@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Méta-informations pour définir l'encodage et l'échelle initiale -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Lien vers la bibliothèque Tailwind CSS version 3.4.1 via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Lien vers votre propre feuille de style (styles.css) -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Titre de la page -->
+    <title>Ma Todolist</title>
+</head>
+
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <!-- Conteneur principal avec fond blanc, ombre et arrondi -->
+    <div class="bg-white p-6 rounded-lg shadow-md w-80">
+
+        <!-- Titre de la Todolist -->
+        <h1 class="text-2xl font-semibold mb-4">Ma Todolist</h1>
+
+        <!-- Formulaire pour ajouter une tâche -->
+        <form id="taskForm" class="mb-4">
+            <!-- Champ de saisie pour la nouvelle tâche -->
+            <input type="text" id="taskInput" class="w-full p-2 border rounded-md" placeholder="Nouvelle tâche"
+                required>
+
+            <!-- Bouton pour soumettre le formulaire -->
+            <button type="submit"
+                class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300">Ajouter</button>
+        </form>
+
+        <!-- Liste des tâches -->
+        <ul id="taskList" class="space-y-2">
+            <!-- Les tâches seront ajoutées ici dynamiquement -->
+        </ul>
+    </div>
+
+    <!-- Ajout du fichier JavaScript (app.js) pour la logique de la Todolist -->
+    <script src="app.js"></script>
+</body>
+
+</html>
