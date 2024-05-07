@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Inclusion de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com" rel="stylesheet"></script>
-    <script>
-        tailwind.config = {
-            theme: {}
-        }
-    </script>
     <title>Todo List</title>
 </head>
 <body class="h-screen flex justify-center item-center">
     <div class="container mx-auto mt-5">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
+        <!-- Formulaire pour ajouter une nouvelle tâche -->
         <form class="mb-5">
             <div class="flex">
                 <label for="new-task" class="sr-only">Add a new task</label>
+                <!-- Champ de saisie pour ajouter une nouvelle tâche -->
                 <input type="text" id="new-task" placeholder="Add a new task..." class="flex-1 py-2 px-3 border border-gray-300 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <!-- Bouton pour ajouter une nouvelle tâche -->
                 <button type="submit" class="bg-blue-500 text-white py-2 px-3 rounded hover:bg-blue-600">Add</button>
             </div>
         </form>
+        <!-- Liste des tâches à faire -->
         <ul id="task-list" class="list-none">
-            <!-- Tasks will be added here -->
+            <!-- Les tâches seront ajoutées ici -->
         </ul>
+        <!-- Liste des tâches terminées -->
         <ul id="completed-task-list" class="list-none mt-5">
-            <!-- Tasks will be finished here -->
+            <!-- Les tâches terminées seront ajoutées ici -->
         </ul>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Sélection des éléments du DOM nécessaires
             const taskList = document.getElementById('task-list');
             const newTaskInput = document.getElementById('new-task');
             const completedTaskList = document.getElementById('completed-task-list');
 
-            // Fonction for defined the color background in priority choice
+            // Fonction pour définir la couleur de fond en fonction de la priorité
             const setBackgroundColor = (task) => {
                 const priority = task.querySelector('select').value;
                 switch (priority) {
@@ -67,22 +69,22 @@
                     });
             };
             
-            
-            // Add a new task
+            // Ajouter une nouvelle tâche
             document.querySelector('form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 if (!newTaskInput.value.trim()) return;
 
+                // Création de l'élément de tâche
                 const task = document.createElement('li');
                 task.className = 'bg-white p-3 my-2 rounded shadow-md flex justify-between items-center';
 
+                // Création des éléments de la tâche (texte, boutons, etc.)
                 const taskContent = document.createElement('div');
                 taskContent.className = 'flex-1';
 
                 const taskCheckbox = document.createElement('input');
                 taskCheckbox.type = 'checkbox';
                 taskCheckbox.className = 'w-4 h-4 border border-gray-400 rounded cursor-pointer flex-shrink-0 mr-2';
-                
 
                 const taskText = document.createElement('span');
                 taskText.textContent = newTaskInput.value.trim();
@@ -117,6 +119,7 @@
                 taskDelete.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
                 taskDelete.textContent = 'Delete';
 
+                // Ajout des éléments à la tâche
                 task.appendChild(taskCheckbox);
                 task.appendChild(taskText);
                 task.appendChild(taskNotesButton);
@@ -127,10 +130,10 @@
                 taskButtons.appendChild(taskDelete);
                 taskList.appendChild(task);
                 
-                // difined color background for priority
+                // Définir la couleur de fond en fonction de la priorité
                 setBackgroundColor(task)
                 
-                //add look event for change priority element select
+                // Ajout d'un événement pour changer la priorité
                 taskPriority.addEventListener('change', () => {
                     setBackgroundColor(task);
                     sortTasks();
@@ -138,14 +141,14 @@
                 
                 taskCheckbox.addEventListener('change', (e) => {
                     if (e.target.checked) {
-                        e.target.disabled = true; // Désactivez la case à cocher une fois cochée
+                        e.target.disabled = true; // Désactiver la case à cocher une fois cochée
                     }
                 });
 
-                // Reset the input value
+                // Réinitialiser la valeur de l'entrée
                 newTaskInput.value = '';
 
-                // Focus on the input
+                // Focus sur l'entrée
                 newTaskInput.focus();
                 
                 // Ajouter un écouteur d'événement pour le bouton "Ajouter"
@@ -155,7 +158,7 @@
                 
             });
 
-            // Toggle notes visibility
+            // Toggle pour afficher/masquer les notes
             taskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Notes') {
                     const task = e.target.closest('li');
@@ -164,29 +167,29 @@
                 }
             });
             
-            // Validate a task
+            // Validation d'une tâche
             taskList.addEventListener('change', (e) => {
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
                     const task = e.target.closest('li');
                     
                     if (e.target.checked) {
                         task.classList.toggle('line-through');
-                        // Move the task to the completed list
+                        // Déplacer la tâche vers la liste des tâches terminées
                         completedTaskList.appendChild(task);
                     } else {
                         task.classList.remove('line-through');        
-                        // Move the task back to the original list
+                        // Déplacer la tâche vers la liste des tâches à faire
                         taskList.appendChild(task);
                     }
                 }
             });
 
-            // Delete a task
+            // Supprimer une tâche
             const deleteTask = (task) => {
                 task.remove();
             };            
             
-            // Delete a task from the completed list
+            // Supprimer une tâche de la liste des tâches terminées
             completedTaskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
                     const task = e.target.closest('li');
@@ -194,7 +197,7 @@
                 }
             });
 
-            // Edit a task
+            // Modifier une tâche
             taskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
                     const task = e.target.closest('li');
