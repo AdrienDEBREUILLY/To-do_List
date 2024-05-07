@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com" rel="stylesheet"></script>
+    <script>
+        tailwind.config = {
+            theme: {}
+        }
+    </script>
+    <title>Todo List</title>
+</head>
+<body class="h-screen flex justify-center item-center">
+    <div class="container mx-auto mt-5">
+        <h1 class="text-4xl text-center mb-5">To-do List</h1>
+        <form class="mb-5">
+            <div class="flex">
+                <label for="new-task" class="sr-only">Add a new task</label>
+                <input type="text" id="new-task" placeholder="Add a new task..." class="flex-1 py-2 px-3 border border-gray-300 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <button type="submit" class="bg-blue-500 text-white py-2 px-3 rounded hover:bg-blue-600">Add</button>
+            </div>
+        </form>
+        <ul id="task-list" class="list-none">
+            <!-- Tasks will be added here -->
+        </ul>
+        <ul id="completed-task-list" class="list-none mt-5">
+            <!-- Tasks will be finished here -->
+        </ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskList = document.getElementById('task-list');
+            const newTaskInput = document.getElementById('new-task');
+            const completedTaskList = document.getElementById('completed-task-list');
+
+            // Fonction for defined the color background in priority choice
+            const setBackgroundColor = (task) => {
+                const priority = task.querySelector('select').value;
+                switch (priority) {
+                    case 'low':
+                        task.style.backgroundColor = '#f5f5f5';
+                        break;
+                    case 'medium':
+                        task.style.backgroundColor = '#ffffe6';
+                        break;
+                    case 'high':
+                        task.style.backgroundColor = '#ffebd2';
+                        break;
+                    default:
+                        task.style.backgroundColor = '#ffffff';
+                }
+            };
+            
+            // Fonction pour trier les tâches en fonction de leur priorité
+            const sortTasks = () => {
+                Array.from(taskList.children) // Convertir les éléments enfants en tableau
+                    .sort((a, b) => {
+                        const priorityOrder = { 'low': 3, 'medium': 2, 'high': 1 };
+                        const aPriority = priorityOrder[a.querySelector('select').value];
+                        const bPriority = priorityOrder[b.querySelector('select').value];
+                        return aPriority - bPriority;
+                    })
+                    .forEach((task) => {
+                        taskList.appendChild(task); // Réinsérer chaque tâche dans la liste triée
+                    });
+            };
+            
+            
+            // Add a new task
+            document.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!newTaskInput.value.trim()) return;
+
+                const task = document.createElement('li');
+                task.className = 'bg-white p-3 my-2 rounded shadow-md flex justify-between items-center';
+
+                const taskContent = document.createElement('div');
+                taskContent.className = 'flex-1';
+
+                const taskCheckbox = document.createElement('input');
+                taskCheckbox.type = 'checkbox';
+                taskCheckbox.className = 'w-4 h-4 border border-gray-400 rounded cursor-pointer flex-shrink-0 mr-2';
+                
+
+                const taskText = document.createElement('span');
+                taskText.textContent = newTaskInput.value.trim();
+                taskText.className = 'flex-1';
+                
+                const taskNotesButton = document.createElement('button');
+                taskNotesButton.className = 'bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600';
+                taskNotesButton.textContent = 'Notes';
+                
+                const taskNotes = document.createElement('textarea');
+                taskNotes.style.display = 'none';
+                taskNotes.placeholder = 'Add notes...';
+                
+                const taskButtons = document.createElement('div');
+                taskButtons.className = 'flex';
+
+                const taskPriority = document.createElement('select');
+                taskPriority.className = 'text-black py-1 px-2 rounded mr-2';
+                taskPriority.innerHTML = `
+                    <option value="default">default</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                `;
+
+                const taskEditButton = document.createElement('button');
+                taskEditButton.dataset.id = task.dataset.id
+                taskEditButton.className = 'bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600';
+                taskEditButton.textContent = 'Edit';
+
+                const taskDelete = document.createElement('button');
+                taskDelete.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
+                taskDelete.textContent = 'Delete';
+
+                task.appendChild(taskCheckbox);
+                task.appendChild(taskText);
+                task.appendChild(taskNotesButton);
+                task.appendChild(taskNotes);
+                task.appendChild(taskPriority);
+                task.appendChild(taskButtons);
+                taskButtons.appendChild(taskEditButton);
+                taskButtons.appendChild(taskDelete);
+                taskList.appendChild(task);
+                
+                // difined color background for priority
+                setBackgroundColor(task)
+                
+                //add look event for change priority element select
+                taskPriority.addEventListener('change', () => {
+                    setBackgroundColor(task);
+                    sortTasks();
+                });
+                
+                taskCheckbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        e.target.disabled = true; // Désactivez la case à cocher une fois cochée
+                    }
+                });
+
+                // Reset the input value
+                newTaskInput.value = '';
+
+                // Focus on the input
+                newTaskInput.focus();
+                
+                // Ajouter un écouteur d'événement pour le bouton "Ajouter"
+                document.querySelector('button[type="submit"]').addEventListener('click', () => {
+                    sortTasks(); // Trier les tâches après l'ajout d'une nouvelle tâche
+                });
+                
+            });
+
+            // Toggle notes visibility
+            taskList.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Notes') {
+                    const task = e.target.closest('li');
+                    const taskNotes = task.querySelector('textarea');
+                    taskNotes.style.display = taskNotes.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+            
+            // Validate a task
+            taskList.addEventListener('change', (e) => {
+                if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+                    const task = e.target.closest('li');
+                    
+                    if (e.target.checked) {
+                        task.classList.toggle('line-through');
+                        // Move the task to the completed list
+                        completedTaskList.appendChild(task);
+                    } else {
+                        task.classList.remove('line-through');        
+                        // Move the task back to the original list
+                        taskList.appendChild(task);
+                    }
+                }
+            });
+
+            // Delete a task
+            const deleteTask = (task) => {
+                task.remove();
+            };            
+            
+            // Delete a task from the completed list
+            completedTaskList.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
+                    const task = e.target.closest('li');
+                    deleteTask(task);
+                }
+            });
+
+            // Edit a task
+            taskList.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
+                    const task = e.target.closest('li');
+                    const taskText = task.querySelector('span');
+                    const newTaskText = prompt('Enter the new task text:');
+                    if (newTaskText) {
+                        taskText.textContent = newTaskText;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
