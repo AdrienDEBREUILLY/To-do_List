@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- Inclusion de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com" rel="stylesheet"></script>
-    <title>Todo List</title>
+    <title>To-do_List</title>
 </head>
-<body class="h-screen flex justify-center item-center">
+<body class="h-screen flex-row justify-center item-center">
     <div class="container mx-auto mt-5">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
         <!-- Formulaire pour ajouter une nouvelle tâche -->
         <form class="mb-5">
             <div class="flex">
-                <label for="new-task" class="sr-only">Add a new task</label>
+                <label for="new-task" class="sr-only">Ajouter une nouvelle tâche</label>
                 <!-- Champ de saisie pour ajouter une nouvelle tâche -->
                 <input type="text" id="new-task" placeholder="Add a new task..." class="flex-1 py-2 px-3 border border-gray-300 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <!-- Bouton pour ajouter une nouvelle tâche -->
@@ -101,6 +101,10 @@
                 const taskButtons = document.createElement('div');
                 taskButtons.className = 'flex';
 
+                const taskDeadlineInput = document.createElement('input');
+                taskDeadlineInput.type = 'date';
+                taskDeadlineInput.className = 'py-1 px-2 border border-gray-300 rounded mr-2';
+
                 const taskPriority = document.createElement('select');
                 taskPriority.className = 'text-black py-1 px-2 rounded mr-2';
                 taskPriority.innerHTML = `
@@ -124,8 +128,9 @@
                 task.appendChild(taskText);
                 task.appendChild(taskNotesButton);
                 task.appendChild(taskNotes);
-                task.appendChild(taskPriority);
                 task.appendChild(taskButtons);
+                taskButtons.appendChild(taskPriority);
+                taskButtons.appendChild(taskDeadlineInput);
                 taskButtons.appendChild(taskEditButton);
                 taskButtons.appendChild(taskDelete);
                 taskList.appendChild(task);
