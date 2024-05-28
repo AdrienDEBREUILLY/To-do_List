@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Inclusion de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com" rel="stylesheet"></script>
+    <title>Logout</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Logique de déconnexion ici, par exemple:
+            // sessionStorage.clear();
+            // localStorage.clear();
+            // Ajout d'un délai de 2 secondes avant la redirection
+            setTimeout(() => {
+                // Rediriger vers la page de connexion
+                window.location.href = 'login.html';
+            }, 3000); // 2000 millisecondes = 2 secondes
+        });
+    </script>
+</head>
+<body class="h-screen flex-row justify-center items-center">
+    <div class="text-center">
+        <p class="text-lg font-semibold mb-4">Déconnexion en cours...</p>
+        <p>Veuillez patienter.</p>
+    </div>
+</body>
+</html>

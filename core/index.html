@@ -8,6 +8,17 @@
     <title>To-do_List</title>
 </head>
 <body class="h-screen flex-row justify-center item-center">
+    <!-- Barre de navigation -->
+    <nav class="flex justify-between bg-purple-600 text-white p-4 sticky top-0 z-10">
+        <ul class="flex space-x-4">
+            <li><a href="./index.html" class="text-left hover:underline">To-do_List</a></li>
+        </ul>
+        <ul class="flex space-x-4">
+            <li><a href="./login.html" class="hover:underline">Login</a></li>
+            <li><a href="./logout.html" class="hover:underline">Logout</a></li>
+            <li><a href="./signup.html" class="hover:underline">Signup</a></li>
+        </ul>
+    </nav>
     <div class="container mx-auto mt-5">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
         <!-- Formulaire pour ajouter une nouvelle tâche -->
@@ -29,7 +40,6 @@
             <!-- Les tâches terminées seront ajoutées ici -->
         </ul>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Sélection des éléments du DOM nécessaires
@@ -54,7 +64,7 @@
                         task.style.backgroundColor = '#ffffff';
                 }
             };
-            
+
             // Fonction pour trier les tâches en fonction de leur priorité
             const sortTasks = () => {
                 Array.from(taskList.children) // Convertir les éléments enfants en tableau
@@ -68,7 +78,7 @@
                         taskList.appendChild(task); // Réinsérer chaque tâche dans la liste triée
                     });
             };
-            
+
             // Ajouter une nouvelle tâche
             document.querySelector('form').addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -89,15 +99,15 @@
                 const taskText = document.createElement('span');
                 taskText.textContent = newTaskInput.value.trim();
                 taskText.className = 'flex-1';
-                
+
                 const taskNotesButton = document.createElement('button');
                 taskNotesButton.className = 'bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600';
                 taskNotesButton.textContent = 'Notes';
-                
+
                 const taskNotes = document.createElement('textarea');
                 taskNotes.style.display = 'none';
                 taskNotes.placeholder = 'Add notes...';
-                
+
                 const taskButtons = document.createElement('div');
                 taskButtons.className = 'flex';
 
@@ -134,10 +144,10 @@
                 taskButtons.appendChild(taskEditButton);
                 taskButtons.appendChild(taskDelete);
                 taskList.appendChild(task);
-                
+
                 // Définir la couleur de fond en fonction de la priorité
                 setBackgroundColor(task)
-                
+
                 // Ajout d'un événement pour changer la priorité
                 taskPriority.addEventListener('change', () => {
                     setBackgroundColor(task);
@@ -155,12 +165,12 @@
 
                 // Focus sur l'entrée
                 newTaskInput.focus();
-                
+
                 // Ajouter un écouteur d'événement pour le bouton "Ajouter"
                 document.querySelector('button[type="submit"]').addEventListener('click', () => {
                     sortTasks(); // Trier les tâches après l'ajout d'une nouvelle tâche
                 });
-                
+
             });
 
             // Toggle pour afficher/masquer les notes
@@ -171,7 +181,7 @@
                     taskNotes.style.display = taskNotes.style.display === 'none' ? 'block' : 'none';
                 }
             });
-            
+
             // Validation d'une tâche
             taskList.addEventListener('change', (e) => {
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
@@ -179,21 +189,29 @@
                     
                     if (e.target.checked) {
                         task.classList.toggle('line-through');
-                        // Déplacer la tâche vers la liste des tâches terminées
-                        completedTaskList.appendChild(task);
-                    } else {
-                        task.classList.remove('line-through');        
-                        // Déplacer la tâche vers la liste des tâches à faire
-                        taskList.appendChild(task);
+                        task.style.backgroundColor = '#b3ffb3'; // Ajout du fond vert aux tâches validées
+                        task.querySelector('select').value = 'default'; // Réinitialiser la priorité à "default"
+                        task.querySelector('select').disabled = true; // Désactiver la sélection de priorité
+                        task.querySelector('input[type="date"]').disabled = true; // Désactiver la sélection de date
+                        completedTaskList.appendChild(task); // Déplacer la tâche vers la liste des tâches terminées
+                    } else { // ne fonctionne pas (raison unconnue)
+                        task.classList.remove('line-through');
+                        task.style.backgroundColor = ''; // Retirer le fond vert si la tâche n'est plus validée
+                        task.querySelector('select').disabled = false; // Réactiver la sélection de priorité
+                        task.querySelector('input[type="date"]').disabled = false; // Réactiver la sélection de date
+                        task.querySelector('textarea').disabled = false; // Réactiver l'édition des notes
+                        task.querySelector('button[data-id="edit"]').disabled = false; // Réactiver le bouton d'édition
+                        taskList.appendChild(task); // Déplacer la tâche vers la liste des tâches en cours
                     }
                 }
             });
+
 
             // Supprimer une tâche
             const deleteTask = (task) => {
                 task.remove();
             };            
-            
+
             // Supprimer une tâche de la liste des tâches terminées
             completedTaskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
