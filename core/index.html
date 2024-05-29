@@ -19,7 +19,7 @@
             <li><a href="./signup.html" class="hover:underline">Signup</a></li>
         </ul>
     </nav>
-    <div class="container mx-auto mt-5">
+    <div class="container mx-auto mt-5 p-5 bg-white rounded shadow-md">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
         <!-- Formulaire pour ajouter une nouvelle tâche -->
         <form class="mb-5">
@@ -81,8 +81,8 @@
 
             // Ajouter une nouvelle tâche
             document.querySelector('form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                if (!newTaskInput.value.trim()) return;
+                e.preventDefault(); // Empêcher le comportement par défaut du formulaire
+                if (!newTaskInput.value.trim()) return; // Vérifier si le champ de saisie est vide
 
                 // Création de l'élément de tâche
                 const task = document.createElement('li');
@@ -92,29 +92,36 @@
                 const taskContent = document.createElement('div');
                 taskContent.className = 'flex-1';
 
+                // Création de la case à cocher
                 const taskCheckbox = document.createElement('input');
                 taskCheckbox.type = 'checkbox';
                 taskCheckbox.className = 'w-4 h-4 border border-gray-400 rounded cursor-pointer flex-shrink-0 mr-2';
 
+                // Création du texte de la tâche
                 const taskText = document.createElement('span');
                 taskText.textContent = newTaskInput.value.trim();
                 taskText.className = 'flex-1';
 
+                // Création du bouton pour les notes
                 const taskNotesButton = document.createElement('button');
                 taskNotesButton.className = 'bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600';
                 taskNotesButton.textContent = 'Notes';
 
+                // Création de la zone de notes
                 const taskNotes = document.createElement('textarea');
                 taskNotes.style.display = 'none';
                 taskNotes.placeholder = 'Add notes...';
 
+                // Création du conteneur pour les boutons
                 const taskButtons = document.createElement('div');
                 taskButtons.className = 'flex';
 
+                // Création du champ pour la date de deadline
                 const taskDeadlineInput = document.createElement('input');
                 taskDeadlineInput.type = 'date';
                 taskDeadlineInput.className = 'py-1 px-2 border border-gray-300 rounded mr-2';
 
+                // Création de la liste déroulante pour la priorité
                 const taskPriority = document.createElement('select');
                 taskPriority.className = 'text-black py-1 px-2 rounded mr-2';
                 taskPriority.innerHTML = `
@@ -124,11 +131,13 @@
                     <option value="high">High</option>
                 `;
 
+                // Création du bouton pour l'édition de la tâche
                 const taskEditButton = document.createElement('button');
                 taskEditButton.dataset.id = task.dataset.id
                 taskEditButton.className = 'bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600';
                 taskEditButton.textContent = 'Edit';
 
+                // Création du bouton pour la suppression de la tâche
                 const taskDelete = document.createElement('button');
                 taskDelete.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
                 taskDelete.textContent = 'Delete';
@@ -154,6 +163,7 @@
                     sortTasks();
                 });
                 
+                // Désactiver la case à cocher une fois cochée
                 taskCheckbox.addEventListener('change', (e) => {
                     if (e.target.checked) {
                         e.target.disabled = true; // Désactiver la case à cocher une fois cochée

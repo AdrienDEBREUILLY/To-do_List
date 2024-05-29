@@ -11,65 +11,84 @@
     <!-- Barre de navigation -->
     <nav class="flex justify-between bg-purple-600 text-white p-4 sticky top-0 z-10">
         <ul class="flex space-x-4">
+            <!-- Lien vers la page d'accueil -->
             <li><a href="./index.html" class="text-left hover:underline">To-do_List</a></li>
         </ul>
         <ul class="flex space-x-4">
+            <!-- Liens vers les autres pages -->
             <li><a href="./login.html" class="hover:underline">Login</a></li>
             <li><a href="./logout.html" class="hover:underline">Logout</a></li>
             <li><a href="./signup.html" class="hover:underline">Signup</a></li>
         </ul>
     </nav>
     <div class="container mx-auto mt-5">
+        <!-- Titre du formulaire -->
         <h1 class="text-4xl text-center mb-5">Sign Up</h1>
         <!-- Formulaire d'inscription -->
-        <form class="bg-white p-6 rounded shadow-md max-w-sm mx-auto">
+        <form id="signup-form" class="bg-white p-6 rounded shadow-md max-w-sm mx-auto">
+            <!-- Champ d'e-mail -->
             <div class="mb-4">
                 <label for="email" class="block text-gray-700">Email:</label>
-                                                            <!-- ^[^\s@]+@[^\s@]+\.[^\s@]+$ -->
-                <input type="email" id="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" 
-                    title="Veuillez saisir une adresse e-mail valide" 
-                    class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <!-- Expression régulière pour la validation de l'e-mail --><!-- ^[^\s@]+@[^\s@]+\.[^\s@]+$ -->
+                <input type="email" id="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                       title="Veuillez saisir une adresse e-mail valide"
+                       class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
+            <!-- Champ de mot de passe -->
             <div class="mb-4">
                 <label for="password" class="block text-gray-700">Password:</label>
+                <!-- Champ pour saisir le mot de passe -->
                 <input type="password" id="password" class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
+            <!-- Champ de confirmation du mot de passe -->
             <div class="mb-4">
                 <label for="confirm-password" class="block text-gray-700">Confirm Password:</label>
+                <!-- Champ pour saisir à nouveau le mot de passe -->
                 <input type="password" id="confirm-password" class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <!-- Message d'erreur en cas de mots de passe non correspondants -->
                 <span id="password-error" class="text-red-500"></span>
             </div>
+            <!-- Boutons de soumission et de redirection -->
             <div class="flex items-center justify-between">
+                <!-- Bouton pour soumettre le formulaire -->
                 <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Sign Up</button>
+                <!-- Lien vers la page de connexion -->
                 <a href="./login.html" class="text-blue-500 hover:underline">Login</a>
             </div>
         </form>
     </div>
+    <!-- Script JavaScript -->
     <script>
+        // Logique JavaScript exécutée après le chargement du document
         document.addEventListener('DOMContentLoaded', () => {
+            // Sélection des champs de mot de passe
             const passwordInput = document.getElementById('password');
             const confirmPasswordInput = document.getElementById('confirm-password');
 
+            // Événement lors de la saisie dans le champ de confirmation du mot de passe
             confirmPasswordInput.addEventListener('input', () => {
+                // Vérification si les mots de passe correspondent
                 if (passwordInput.value !== confirmPasswordInput.value) {
+                    // Affichage d'un message d'erreur si les mots de passe ne correspondent pas
                     confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas.');
                     document.getElementById('password-error').textContent = "Les mots de passe ne correspondent pas.";
                 } else {
+                    // Réinitialisation du message d'erreur si les mots de passe correspondent
                     confirmPasswordInput.setCustomValidity('');
                     document.getElementById('password-error').textContent = "";
                 }
             });
-            document.querySelector('form').addEventListener('submit', (e) => {
-                e.preventDefault();
 
+            // Événement lors de la soumission du formulaire
+            document.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault(); // Empêche l'action par défaut du formulaire
+
+                // Redirection vers la page de connexion après la soumission du formulaire
                 window.location.href = 'login.html';
 
-                // Ajoutez une protection CSRF appropriée dans votre backend si nécessaire
-                // Cela peut inclure l'utilisation de jetons CSRF dans vos formulaires
-
-                // Assurez-vous de hacher les mots de passe avec une fonction de hachage sécurisée avant de les stocker dans la base de données.
-                // Utilisez une bibliothèque de hachage robuste comme bcrypt
-                });
+                // Ajout de mesures de sécurité CSRF si nécessaire dans le backend
+                // Hachage sécurisé des mots de passe avant stockage dans la base de données
+            });
         });
     </script>
 </body>
