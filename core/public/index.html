@@ -22,7 +22,7 @@
     <div class="container mx-auto mt-5 p-5 bg-white rounded shadow-md">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
         <!-- Formulaire pour ajouter une nouvelle tâche -->
-        <form class="mb-5">
+        <form method="post" class="mb-5">
             <div class="flex">
                 <label for="new-task" class="sr-only">Ajouter une nouvelle tâche</label>
                 <!-- Champ de saisie pour ajouter une nouvelle tâche -->
@@ -79,14 +79,21 @@
                     });
             };
 
+            const generateTaskId = () => {
+                return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+            };
+
             // Ajouter une nouvelle tâche
             document.querySelector('form').addEventListener('submit', (e) => {
                 e.preventDefault(); // Empêcher le comportement par défaut du formulaire
                 if (!newTaskInput.value.trim()) return; // Vérifier si le champ de saisie est vide
 
+                const taskId = generateTaskId();  // Générer un identifiant unique
+
                 // Création de l'élément de tâche
                 const task = document.createElement('li');
                 task.className = 'bg-white p-3 my-2 rounded shadow-md flex justify-between items-center';
+                task.setAttribute('data-id', taskId);
 
                 // Création des éléments de la tâche (texte, boutons, etc.)
                 const taskContent = document.createElement('div');
@@ -109,7 +116,7 @@
 
                 // Création de la zone de notes
                 const taskNotes = document.createElement('textarea');
-                taskNotes.style.display = 'none';
+                taskNotes.style.display = 'none'; // Initialement cachée
                 taskNotes.placeholder = 'Add notes...';
 
                 // Création du conteneur pour les boutons
@@ -133,7 +140,7 @@
 
                 // Création du bouton pour l'édition de la tâche
                 const taskEditButton = document.createElement('button');
-                taskEditButton.dataset.id = task.dataset.id
+                taskEditButton.dataset.id = taskId;
                 taskEditButton.className = 'bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600';
                 taskEditButton.textContent = 'Edit';
 
@@ -145,11 +152,11 @@
                 // Ajout des éléments à la tâche
                 task.appendChild(taskCheckbox);
                 task.appendChild(taskText);
-                task.appendChild(taskNotesButton);
-                task.appendChild(taskNotes);
                 task.appendChild(taskButtons);
                 taskButtons.appendChild(taskPriority);
                 taskButtons.appendChild(taskDeadlineInput);
+                taskButtons.appendChild(taskNotes);
+                taskButtons.appendChild(taskNotesButton);
                 taskButtons.appendChild(taskEditButton);
                 taskButtons.appendChild(taskDelete);
                 taskList.appendChild(task);
@@ -162,7 +169,7 @@
                     setBackgroundColor(task);
                     sortTasks();
                 });
-                
+
                 // Désactiver la case à cocher une fois cochée
                 taskCheckbox.addEventListener('change', (e) => {
                     if (e.target.checked) {
@@ -181,6 +188,8 @@
                     sortTasks(); // Trier les tâches après l'ajout d'une nouvelle tâche
                 });
 
+                TaskToDatabase(taskId, taskText, taskDeadlineInput, taskNotes, taskPriority);
+
             });
 
             // Toggle pour afficher/masquer les notes
@@ -196,7 +205,8 @@
             taskList.addEventListener('change', (e) => {
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
                     const task = e.target.closest('li');
-                    
+                    const taskId = task.getAttribute('data-id');
+
                     if (e.target.checked) {
                         task.classList.toggle('line-through');
                         task.style.backgroundColor = '#b3ffb3'; // Ajout du fond vert aux tâches validées
@@ -213,9 +223,9 @@
                         task.querySelector('button[data-id="edit"]').disabled = false; // Réactiver le bouton d'édition
                         taskList.appendChild(task); // Déplacer la tâche vers la liste des tâches en cours
                     }
+                    validateTaskInDatabase(taskId);
                 }
             });
-
 
             // Supprimer une tâche
             const deleteTask = (task) => {
@@ -226,21 +236,111 @@
             completedTaskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
                     const task = e.target.closest('li');
+                    const taskId = task.getAttribute('data-id');
                     deleteTask(task);
+                    deleteTaskFromDatabase(taskId);
                 }
             });
 
-            // Modifier une tâche
+            // Modifier le nom d'une tâche
             taskList.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
                     const task = e.target.closest('li');
+                    const taskId = task.getAttribute('data-id');
                     const taskText = task.querySelector('span');
                     const newTaskText = prompt('Enter the new task text:');
                     if (newTaskText) {
                         taskText.textContent = newTaskText;
                     }
+                    updateTaskNameInDatabase(taskId, newTaskText);
                 }
             });
+
+            // appels de données pour les routes
+            async function TaskToDatabase(taskId, taskText, taskDeadlineInput, taskNotes, taskPriority) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+                formData.append('taskText', taskText);
+                formData.append('taskDeadlineInput', taskDeadlineInput)
+                formData.append('taskNotes', taskNotes)
+                formData.append('taskPriority', taskPriority)
+
+                try {
+                    const response = await fetch('/tache', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function validateTaskInDatabase(taskId) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+
+                try {
+                    const response = await fetch('/valider-tache', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche validée avec succès dans la base de données.');
+                        // Réalisez les actions nécessaires après la validation de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de la validation de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function updateTaskNameInDatabase(taskId, newTaskText) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+                formData.append('newTaskText', newTaskText);
+
+                try {
+                    const response = await fetch('/modifier-nom-tache', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche modifiée avec succès dans la base de données.');
+                        // Réalisez les actions nécessaires après la modification de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de la modification de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function deleteTaskFromDatabase(taskId) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+
+                try {
+                    const response = await fetch('/supprimer-tache', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche supprimée avec succès de la base de données.');
+                        // Réalisez les actions nécessaires après la suppression de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de la suppression de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
         });
     </script>
 </body>
