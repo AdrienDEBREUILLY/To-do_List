@@ -28,15 +28,80 @@ connection.connect((err) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Route pour récupérer toutes les tâches
+// app.get('/taskgetting', (req, res) => {
+//     res.json(tasks);
+// });
+
 // Route pour ajouter une tâche à la base de données
-app.post('/tache', (req, res) => {
-    const { taskId, taskText, taskDeadlineInput, taskNotes, taskPriority } = req.body;
+app.post('/addtache', (req, res) => {
+    const { taskId, taskText } = req.body;
 
     // Insérer les données de la tâche dans la base de données
     // Vous devrez adapter cette requête en fonction de votre schéma de base de données
     connection.query(
-        'INSERT INTO Task (id_task, titre, date_echeance, description, priorite) VALUES (?, ?, ?, ?, ?);',
-        [taskId, taskText, taskDeadlineInput, taskNotes, taskPriority],
+        'INSERT INTO Task (id_task, titre) VALUES (?, ?);',
+        [taskId, taskText],
+        (err, result) => {
+            if (err) {
+                console.error('Erreur lors de l\'insertion de la tâche : ', err);
+                res.status(500).send('Erreur serveur');
+                return;
+            }
+            res.status(200).send('Tâche ajoutée avec succès');
+        }
+    );
+});
+
+// ajout de la date
+app.put('/updatetache', (req, res) => {
+    const { taskId, taskDeadlineInput } = req.body;
+
+    // Insérer les données de la tâche dans la base de données
+    // Vous devrez adapter cette requête en fonction de votre schéma de base de données
+    connection.query(
+        'INSERT INTO Task (date_echeance) VALUES (?) WHERE id_task = ?;',
+        [taskId, taskDeadlineInput],
+        (err, result) => {
+            if (err) {
+                console.error('Erreur lors de l\'insertion de la tâche : ', err);
+                res.status(500).send('Erreur serveur');
+                return;
+            }
+            res.status(200).send('Tâche ajoutée avec succès');
+        }
+    );
+});
+
+// ajout de la note
+app.put('/upnotetache', (req, res) => {
+    const { taskId, taskNotes} = req.body;
+
+    // Insérer les données de la tâche dans la base de données
+    // Vous devrez adapter cette requête en fonction de votre schéma de base de données
+    connection.query(
+        'INSERT INTO Task (description) VALUES (?) WHERE id_task = ?;',
+        [taskId, taskNotes],
+        (err, result) => {
+            if (err) {
+                console.error('Erreur lors de l\'insertion de la tâche : ', err);
+                res.status(500).send('Erreur serveur');
+                return;
+            }
+            res.status(200).send('Tâche ajoutée avec succès');
+        }
+    );
+});
+
+// ajout de la priorité
+app.put('/uppriotache', (req, res) => {
+    const { taskId, taskPriority } = req.body;
+
+    // Insérer les données de la tâche dans la base de données
+    // Vous devrez adapter cette requête en fonction de votre schéma de base de données
+    connection.query(
+        'INSERT INTO Task (priorite) VALUES (?) WHERE id_task = ? ;',
+        [taskId, taskPriority],
         (err, result) => {
             if (err) {
                 console.error('Erreur lors de l\'insertion de la tâche : ', err);
@@ -49,7 +114,7 @@ app.post('/tache', (req, res) => {
 });
 
 // Route pour valider une tâche dans la base de données
-app.post('/valider-tache', (req, res) => {
+app.put('/valider-tache', (req, res) => {
     const { taskId } = req.body;
 
     // Mettre à jour l'état de la tâche dans la base de données pour la marquer comme validée
@@ -69,7 +134,7 @@ app.post('/valider-tache', (req, res) => {
 });
 
 // Route pour modifier le nom d'une tâche dans la base de données
-app.post('/modifier-nom-tache', (req, res) => {
+app.put('/modifier-nom-tache', (req, res) => {
     const { taskId, newTaskText } = req.body;
 
     // Mettre à jour le nom de la tâche dans la base de données
@@ -89,7 +154,7 @@ app.post('/modifier-nom-tache', (req, res) => {
 });
 
 // Route pour supprimer une tâche de la base de données
-app.post('/supprimer-tache', (req, res) => {
+app.delete('/supprimer-tache', (req, res) => {
     const { taskId } = req.body;
 
     // Supprimer la tâche de la base de données

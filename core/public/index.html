@@ -22,11 +22,11 @@
     <div class="container mx-auto mt-5 p-5 bg-white rounded shadow-md">
         <h1 class="text-4xl text-center mb-5">To-do List</h1>
         <!-- Formulaire pour ajouter une nouvelle tâche -->
-        <form method="post" class="mb-5">
+        <form class="mb-5">
             <div class="flex">
                 <label for="new-task" class="sr-only">Ajouter une nouvelle tâche</label>
                 <!-- Champ de saisie pour ajouter une nouvelle tâche -->
-                <input type="text" id="new-task" placeholder="Add a new task..." class="flex-1 py-2 px-3 border border-gray-300 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="text" id="new-task" name="taskText" placeholder="Add a new task..." class="flex-1 py-2 px-3 border border-gray-300 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <!-- Bouton pour ajouter une nouvelle tâche -->
                 <button type="submit" class="bg-blue-500 text-white py-2 px-3 rounded hover:bg-blue-600">Add</button>
             </div>
@@ -39,6 +39,11 @@
         <ul id="completed-task-list" class="list-none mt-5">
             <!-- Les tâches terminées seront ajoutées ici -->
         </ul>
+        <!-- Affichage des données consolées -->
+        <div id="console-output" class="mt-5 p-3 bg-gray-100 rounded">
+            <h2 class="text-lg font-bold mb-2">Console Output</h2>
+            <div id="console-output-content"></div>
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -83,8 +88,22 @@
                 return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
             };
 
+            // Fonction pour afficher les données consolées dans l'élément div
+            //const displayConsoleOutput = (taskId, taskText, taskDeadlineInput, taskNotes, taskPriority) => {
+            //    const consoleOutputContent = document.getElementById('console-output-content');
+            //    const outputHTML = `
+            //        <p><strong>Task ID:</strong> ${taskId}</p>
+            //        <p><strong>Task Text:</strong> ${taskText}</p>
+            //        <p><strong>Task Deadline:</strong> ${taskDeadlineInput}</p>
+            //        <p><strong>Task Notes:</strong> ${taskNotes}</p>
+            //        <p><strong>Task Priority:</strong> ${taskPriority}</p>
+            //        <hr>
+            //    `;
+            //    consoleOutputContent.innerHTML += outputHTML;
+            //};
+
             // Ajouter une nouvelle tâche
-            document.querySelector('form').addEventListener('submit', (e) => {
+            document.querySelector('form').addEventListener('submit', async (e) => {
                 e.preventDefault(); // Empêcher le comportement par défaut du formulaire
                 if (!newTaskInput.value.trim()) return; // Vérifier si le champ de saisie est vide
 
@@ -188,7 +207,25 @@
                     sortTasks(); // Trier les tâches après l'ajout d'une nouvelle tâche
                 });
 
-                TaskToDatabase(taskId, taskText, taskDeadlineInput, taskNotes, taskPriority);
+                //displayConsoleOutput(taskId, taskText.textContent);
+                await TaskToDatabase(taskId, taskText.textContent);
+
+                taskPriority.addEventListener('change', async () => {
+                    setBackgroundColor(task);
+                    sortTasks();
+                    //displayConsoleOutput(taskId, '', '', '', taskPriority.value);
+                    await updateTaskPriorityToDatabase(taskId, taskPriority.value);
+                });
+
+                taskNotes.addEventListener('input', async () => {
+                    //displayConsoleOutput(taskId, '', '', taskNotes.value, '');
+                    await updateTaskNotesToDatabase(taskId, taskNotes.value);
+                });
+
+                taskDeadlineInput.addEventListener('change', async () => {
+                    //displayConsoleOutput(taskId, '', taskDeadlineInput.value, '', '');
+                    await updateTaskDeadlineInputToDatabase(taskId, taskDeadlineInput.value);
+                });
 
             });
 
@@ -202,7 +239,7 @@
             });
 
             // Validation d'une tâche
-            taskList.addEventListener('change', (e) => {
+            taskList.addEventListener('change', async (e) => {
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
                     const task = e.target.closest('li');
                     const taskId = task.getAttribute('data-id');
@@ -223,7 +260,7 @@
                         task.querySelector('button[data-id="edit"]').disabled = false; // Réactiver le bouton d'édition
                         taskList.appendChild(task); // Déplacer la tâche vers la liste des tâches en cours
                     }
-                    validateTaskInDatabase(taskId);
+                    await validateTaskInDatabase(taskId);
                 }
             });
 
@@ -233,17 +270,17 @@
             };            
 
             // Supprimer une tâche de la liste des tâches terminées
-            completedTaskList.addEventListener('click', (e) => {
+            completedTaskList.addEventListener('click', async (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
                     const task = e.target.closest('li');
                     const taskId = task.getAttribute('data-id');
                     deleteTask(task);
-                    deleteTaskFromDatabase(taskId);
+                    await deleteTaskFromDatabase(taskId);
                 }
             });
 
             // Modifier le nom d'une tâche
-            taskList.addEventListener('click', (e) => {
+            taskList.addEventListener('click', async (e) => {
                 if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
                     const task = e.target.closest('li');
                     const taskId = task.getAttribute('data-id');
@@ -252,22 +289,82 @@
                     if (newTaskText) {
                         taskText.textContent = newTaskText;
                     }
-                    updateTaskNameInDatabase(taskId, newTaskText);
+                    await updateTaskNameInDatabase(taskId, newTaskText);
                 }
             });
 
             // appels de données pour les routes
-            async function TaskToDatabase(taskId, taskText, taskDeadlineInput, taskNotes, taskPriority) {
+            async function TaskToDatabase(taskId, taskText) {
                 const formData = new FormData();
                 formData.append('taskId', taskId);
                 formData.append('taskText', taskText);
-                formData.append('taskDeadlineInput', taskDeadlineInput)
-                formData.append('taskNotes', taskNotes)
-                formData.append('taskPriority', taskPriority)
 
                 try {
-                    const response = await fetch('/tache', {
-                        method: 'POST',
+                    const response = await fetch('/addtache', {
+                        method: 'post',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function updateTaskDeadlineInputToDatabase(taskId, taskDeadlineInput) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+                formData.append('taskDeadlineInput', taskDeadlineInput);
+
+                try {
+                    const response = await fetch('/updatetache', {
+                        method: 'put',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function updateTaskNotesToDatabase(taskId, taskNotes) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+                formData.append('taskNotes', taskNotes);
+
+                try {
+                    const response = await fetch('/upnotetache', {
+                        method: 'put',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            }
+
+            async function updateTaskPriorityToDatabase(taskId, taskPriority) {
+                const formData = new FormData();
+                formData.append('taskId', taskId);
+                formData.append('taskPriority', taskPriority);
+
+                try {
+                    const response = await fetch('/uppriotache', {
+                        method: 'put',
                         body: formData
                     });
                     if (response.ok) {
@@ -287,7 +384,7 @@
 
                 try {
                     const response = await fetch('/valider-tache', {
-                        method: 'POST',
+                        method: 'put',
                         body: formData
                     });
                     if (response.ok) {
@@ -308,7 +405,7 @@
 
                 try {
                     const response = await fetch('/modifier-nom-tache', {
-                        method: 'POST',
+                        method: 'put',
                         body: formData
                     });
                     if (response.ok) {
@@ -328,7 +425,7 @@
 
                 try {
                     const response = await fetch('/supprimer-tache', {
-                        method: 'POST',
+                        method: 'delete',
                         body: formData
                     });
                     if (response.ok) {
