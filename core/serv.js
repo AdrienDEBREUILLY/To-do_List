@@ -1,6 +1,7 @@
 // Importer les modules nécessaires
 const cors = require('cors');
 const express = require('express');
+const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const app = express();
 const port = 3000;
@@ -27,28 +28,10 @@ db.connect((err) => {
     console.log('Connecté à la base de données MySQL');
 });
 
-
-
-// Route pour récupérer toutes les tâches
-// app.get('/taskgetting', (req, res) => {
-//     res.json(tasks);
-// });
-
-// Récupérer toutes les tâches
-app.get('/gettask', (req, res) => {
-    const sql = 'SELECT * FROM Task';
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.error('Erreur lors de la récupération des tâches à partir de la base de données:', err);
-            res.status(500).send('Erreur lors de la récupération des tâches à partir de la base de données');
-            return;
-        }
-        res.status(200).json(result);
-    });
-});
+///////////////////////////////////////////////////////////////////// index.html => serv.js
 
 // Route pour ajouter une tâche à la base de données
-app.post('/task/:id/add', (req, res) => {
+app.post('/task/:id/add', async (req, res) => {
     const taskId = req.params.id;
     const { taskText } = req.body;
     const sql = 'INSERT INTO Task (id_task, titre) VALUES (?, ?);';
@@ -66,7 +49,7 @@ app.post('/task/:id/add', (req, res) => {
 });
 
 // mise à jour de la date
-app.put('/task/:id/updeadline', (req, res) => {
+app.put('/task/:id/updeadline', async (req, res) => {
     const taskId = req.params.id;
     const { taskDeadlineInput } = req.body;
     const sql = 'UPDATE Task SET date_echeance = ? WHERE id_task = ?;';
@@ -84,7 +67,7 @@ app.put('/task/:id/updeadline', (req, res) => {
 });
 
 // ajout de la note
-app.put('/task/:id/upnotes', (req, res) => {
+app.put('/task/:id/upnotes', async (req, res) => {
     const taskId = req.params.id;
     const { taskNotes} = req.body;
     const sql = 'UPDATE Task SET description = ? WHERE id_task = ?;';
@@ -102,11 +85,9 @@ app.put('/task/:id/upnotes', (req, res) => {
 });
 
 // ajout de la priorité
-app.put('/task/:id/uppriority', (req, res) => {
+app.put('/task/:id/uppriority', async (req, res) => {
     const taskId = req.params.id;
-    console.log(`Task ID: ${taskId}`);
     const { taskPriority } = req.body;
-    console.log(`Task Prio: ${taskPriority}`);
     const sql = 'UPDATE Task SET priorite = ? WHERE id_task = ?;';
     // Insérer les données de la tâche dans la base de données
     // Vous devrez adapter cette requête en fonction de votre schéma de base de données
@@ -122,7 +103,7 @@ app.put('/task/:id/uppriority', (req, res) => {
 });
 
 // Route pour valider une tâche dans la base de données
-app.put('/task/:id/check', (req, res) => {
+app.put('/task/:id/check', async (req, res) => {
     const taskId = req.params.id;
     const sql = 'UPDATE Task SET status = TRUE WHERE id_task = ?';
     // Mettre à jour l'état de la tâche dans la base de données pour la marquer comme validée
@@ -139,7 +120,7 @@ app.put('/task/:id/check', (req, res) => {
 });
 
 // Route pour valider une tâche dans la base de données
-app.put('/task/:id/uncheck', (req, res) => {
+app.put('/task/:id/uncheck', async (req, res) => {
     const taskId = req.params.id;
     const sql = 'UPDATE Task SET status = FALSE WHERE id_task = ?';
     // Mettre à jour l'état de la tâche dans la base de données pour la marquer comme validée
@@ -156,7 +137,7 @@ app.put('/task/:id/uncheck', (req, res) => {
 });
 
 // Route pour modifier le nom d'une tâche dans la base de données
-app.put('/task/:id/uptask', (req, res) => {
+app.put('/task/:id/uptask', async (req, res) => {
     const taskId = req.params.id;
     const { newTaskText } = req.body;
     const sql = 'UPDATE Task SET titre = ? WHERE id_task = ?';
@@ -174,7 +155,7 @@ app.put('/task/:id/uptask', (req, res) => {
 });
 
 // Route pour supprimer une tâche de la base de données
-app.delete('/task/:id/delete', (req, res) => {
+app.delete('/task/:id/delete', async (req, res) => {
     const taskId = req.params.id;
     const sql = 'DELETE FROM Task WHERE id_task = ?';
     // Supprimer la tâche de la base de données
@@ -188,6 +169,58 @@ app.delete('/task/:id/delete', (req, res) => {
             }
             res.status(200).send('Tâche supprimée avec succès');
         });
+});
+
+///////////////////////////////////////////////////////////////////// signup.html => serv.js
+
+// Route pour ajouter un utilisateur
+app.post('/signup', async (req, res) => {
+    const { username } = req.body;
+    console.log(`UserName: ${username}`);
+    const { email } = req.body;
+    console.log(`email: ${email}`);
+    const { password } = req.body;
+    console.log(`password: ${password}`);
+    const sql = 'INSERT INTO user (username, email, password) VALUES (?, ?, ?);';
+    try {
+        // Hacher le mot de passe
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(`HashPassword: ${hashedPassword}`);
+        // Ajouter l'utilisateur à la base de données
+        db.query(sql, [username, email, hashedPassword], (err, result) => {
+            if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                    // Gérer le cas où l'e-mail est déjà utilisé
+                    return res.status(400).send('Adresse e-mail déjà utilisée');
+                }
+                console.error('Erreur lors de l\'insertion de l\'utilisateur : ', err);
+                return res.status(500).send('Erreur serveur lors de l\'ajout de l\'utilisateur');
+            }
+            res.status(200).send('Utilisateur ajouté avec succès');
+            });
+    } catch (error) {
+        console.error('Erreur lors du hachage du mot de passe : ', error);
+        res.status(500).send('Erreur serveur');
+    }
+});
+
+///////////////////////////////////////////////////////////////////// login.html <=> serv.js
+
+
+
+///////////////////////////////////////////////////////////////////// serv.js => index.html
+
+// Récupérer toutes les tâches
+app.get('/gettask', async (req, res) => {
+    const sql = 'SELECT * FROM Task';
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des tâches à partir de la base de données:', err);
+            res.status(500).send('Erreur lors de la récupération des tâches à partir de la base de données');
+            return;
+        }
+        res.status(200).json(result);
+    });
 });
 
 // Démarrer le serveur
