@@ -1,0 +1,4 @@
+--- ligne de commande pour activer le server backend express a partir du fichier backend du projet qu'est serv.js :
+--- node core/serv.js
+--- ligne de commande pour activer le server frontend http a partir du fichier racine frontend du projet qu'est index.html :
+--- npx http-server -a localhost -p 8080 core/public

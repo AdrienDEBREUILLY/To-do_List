@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- Inclusion de Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com" rel="stylesheet"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <title>To-do_List</title>
+    <link rel="icon" type="image/svg" href="../icon/list-check-solid.svg">
 </head>
 <body class="h-screen flex-row justify-center item-center">
     <!-- Barre de navigation -->
@@ -102,6 +103,11 @@
             //    consoleOutputContent.innerHTML += outputHTML;
             //};
 
+            // Supprimer une tâche
+            const deleteTask = (task) => {
+                task.remove();
+            };
+
             // Ajouter une nouvelle tâche
             document.querySelector('form').addEventListener('submit', async (e) => {
                 e.preventDefault(); // Empêcher le comportement par défaut du formulaire
@@ -131,16 +137,25 @@
                 // Création du bouton pour les notes
                 const taskNotesButton = document.createElement('button');
                 taskNotesButton.className = 'bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600';
-                taskNotesButton.textContent = 'Notes';
+                taskNotesButton.textContent = 'notes';
 
                 // Création de la zone de notes
                 const taskNotes = document.createElement('textarea');
+                taskNotes.className = 'py-1 px-2 rounded mr-2';
                 taskNotes.style.display = 'none'; // Initialement cachée
                 taskNotes.placeholder = 'Add notes...';
 
                 // Création du conteneur pour les boutons
                 const taskButtons = document.createElement('div');
                 taskButtons.className = 'flex';
+
+                // Création du conteneur pour le bouton Note
+                const taskButtonsNotes = document.createElement('div');
+                taskButtonsNotes.className = 'flex';
+
+                // Création du conteneur pour le bouton Edit
+                const taskButtonsEdit = document.createElement('div');
+                taskButtonsEdit.className = 'flex';
 
                 // Création du champ pour la date de deadline
                 const taskDeadlineInput = document.createElement('input');
@@ -159,14 +174,13 @@
 
                 // Création du bouton pour l'édition de la tâche
                 const taskEditButton = document.createElement('button');
-                taskEditButton.dataset.id = taskId;
                 taskEditButton.className = 'bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600';
-                taskEditButton.textContent = 'Edit';
+                taskEditButton.textContent = 'edit';
 
                 // Création du bouton pour la suppression de la tâche
-                const taskDelete = document.createElement('button');
-                taskDelete.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
-                taskDelete.textContent = 'Delete';
+                const taskDeleteButton = document.createElement('button');
+                taskDeleteButton.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
+                taskDeleteButton.textContent = 'delete';
 
                 // Ajout des éléments à la tâche
                 task.appendChild(taskCheckbox);
@@ -175,41 +189,17 @@
                 taskButtons.appendChild(taskPriority);
                 taskButtons.appendChild(taskDeadlineInput);
                 taskButtons.appendChild(taskNotes);
-                taskButtons.appendChild(taskNotesButton);
-                taskButtons.appendChild(taskEditButton);
-                taskButtons.appendChild(taskDelete);
+                taskButtonsNotes.appendChild(taskNotesButton);
+                taskButtons.appendChild(taskButtonsNotes)
+                taskButtonsEdit.appendChild(taskEditButton);
+                taskButtons.appendChild(taskButtonsEdit)
+                taskButtons.appendChild(taskDeleteButton);
                 taskList.appendChild(task);
 
                 // Définir la couleur de fond en fonction de la priorité
                 setBackgroundColor(task)
 
                 // Ajout d'un événement pour changer la priorité
-                taskPriority.addEventListener('change', () => {
-                    setBackgroundColor(task);
-                    sortTasks();
-                });
-
-                // Désactiver la case à cocher une fois cochée
-                taskCheckbox.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        e.target.disabled = true; // Désactiver la case à cocher une fois cochée
-                    }
-                });
-
-                // Réinitialiser la valeur de l'entrée
-                newTaskInput.value = '';
-
-                // Focus sur l'entrée
-                newTaskInput.focus();
-
-                // Ajouter un écouteur d'événement pour le bouton "Ajouter"
-                document.querySelector('button[type="submit"]').addEventListener('click', () => {
-                    sortTasks(); // Trier les tâches après l'ajout d'une nouvelle tâche
-                });
-
-                //displayConsoleOutput(taskId, taskText.textContent);
-                await TaskToDatabase(taskId, taskText.textContent);
-
                 taskPriority.addEventListener('change', async () => {
                     setBackgroundColor(task);
                     sortTasks();
@@ -217,92 +207,102 @@
                     await updateTaskPriorityToDatabase(taskId, taskPriority.value);
                 });
 
+                // Ajout d'un événement pour écrire une note / description
                 taskNotes.addEventListener('input', async () => {
                     //displayConsoleOutput(taskId, '', '', taskNotes.value, '');
                     await updateTaskNotesToDatabase(taskId, taskNotes.value);
                 });
 
+                // Ajout d'un événement pour mettre une deadline
                 taskDeadlineInput.addEventListener('change', async () => {
                     //displayConsoleOutput(taskId, '', taskDeadlineInput.value, '', '');
                     await updateTaskDeadlineInputToDatabase(taskId, taskDeadlineInput.value);
                 });
 
-            });
-
-            // Toggle pour afficher/masquer les notes
-            taskList.addEventListener('click', (e) => {
-                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Notes') {
-                    const task = e.target.closest('li');
-                    const taskNotes = task.querySelector('textarea');
-                    taskNotes.style.display = taskNotes.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-
-            // Validation d'une tâche
-            taskList.addEventListener('change', async (e) => {
-                if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
-                    const task = e.target.closest('li');
+                // Validation d'une tâche
+                taskCheckbox.addEventListener('change', async (e) => {
                     const taskId = task.getAttribute('data-id');
+                    const dateInput = task.querySelector('input[type="date"]');
+                    const textarea = task.querySelector('textarea');
 
-                    if (e.target.checked) {
+                    if (e.target.checked) { // checked
                         task.classList.toggle('line-through');
                         task.style.backgroundColor = '#b3ffb3'; // Ajout du fond vert aux tâches validées
                         task.querySelector('select').value = 'default'; // Réinitialiser la priorité à "default"
                         task.querySelector('select').disabled = true; // Désactiver la sélection de priorité
-                        task.querySelector('input[type="date"]').disabled = true; // Désactiver la sélection de date
+                        if (dateInput !== null) {dateInput.disabled = true;} // Désactiver la sélection de date
+                        if (textarea !== null) {textarea.disabled = true;} // Désactiver la zone text des notes
+                        task.setAttribute('data-completed', 'true'); // Marquer la tâche comme terminée
                         completedTaskList.appendChild(task); // Déplacer la tâche vers la liste des tâches terminées
-                    } else { // ne fonctionne pas (raison unconnue)
+                        await validateTaskInDatabase(taskId);
+
+                    } else { // unchecked
                         task.classList.remove('line-through');
                         task.style.backgroundColor = ''; // Retirer le fond vert si la tâche n'est plus validée
                         task.querySelector('select').disabled = false; // Réactiver la sélection de priorité
-                        task.querySelector('input[type="date"]').disabled = false; // Réactiver la sélection de date
-                        task.querySelector('textarea').disabled = false; // Réactiver l'édition des notes
-                        task.querySelector('button[data-id="edit"]').disabled = false; // Réactiver le bouton d'édition
+                        if (dateInput !== null) {dateInput.disabled = false;} // Réactiver la sélection de date
+                        if (textarea !== null) {task.querySelector('textarea').disabled = false;}// Réactiver la zone text des notes
+                        task.removeAttribute('data-completed'); // Supprimer la marque de la tâche comme terminée
                         taskList.appendChild(task); // Déplacer la tâche vers la liste des tâches en cours
+                        await unvalidateTaskInDatabase(taskId)
                     }
-                    await validateTaskInDatabase(taskId);
-                }
-            });
+                });
 
-            // Supprimer une tâche
-            const deleteTask = (task) => {
-                task.remove();
-            };            
+                // Toggle pour afficher/masquer les notes
+                taskNotesButton.addEventListener('click', () => {
+                    taskNotes.style.display = taskNotes.style.display === 'none' ? 'block' : 'none';
+                    taskButtonsNotes.appendChild(taskNotesButton);
+                });
 
-            // Supprimer une tâche de la liste des tâches terminées
-            completedTaskList.addEventListener('click', async (e) => {
-                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Delete') {
-                    const task = e.target.closest('li');
-                    const taskId = task.getAttribute('data-id');
-                    deleteTask(task);
-                    await deleteTaskFromDatabase(taskId);
-                }
-            });
-
-            // Modifier le nom d'une tâche
-            taskList.addEventListener('click', async (e) => {
-                if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
-                    const task = e.target.closest('li');
-                    const taskId = task.getAttribute('data-id');
-                    const taskText = task.querySelector('span');
+                // Modifier le nom d'une tâche
+                taskEditButton.addEventListener('click', async () => {
                     const newTaskText = prompt('Enter the new task text:');
-                    if (newTaskText) {
-                        taskText.textContent = newTaskText;
+                    const isCompleted = task.getAttribute('data-completed');
+                    if (isCompleted !== 'true') {
+                        if (newTaskText) {
+                            taskText.textContent = newTaskText;
+                            await updateTaskNameInDatabase(taskId, newTaskText);
+                            taskButtonsEdit.appendChild(taskEditButton);
+                        }else{
+                            console.log('Cette édition ne peut être faite car la tache et validé.');
+                        }
                     }
-                    await updateTaskNameInDatabase(taskId, newTaskText);
-                }
+                });
+
+                // Supprimer une tâche uniquement de la liste des tâches terminées
+                taskDeleteButton.addEventListener('click', async () => {
+                    const isCompleted = task.getAttribute('data-completed');
+                    if (isCompleted === 'true') {
+                        deleteTask(task);
+                        await deleteTaskFromDatabase(taskId);
+                        taskButtons.appendChild(taskDeleteButton);
+                    }else{
+                        // Affiche un message ou empêchez la suppression de la tâche dans la liste des tâches à faire
+                        console.log('Cette tâche ne peut être supprimée car elle n\'est pas terminée.');
+                    }
+                });
+
+                newTaskInput.value = ''; // Réinitialiser la valeur de l'entrée
+                newTaskInput.focus(); // Focus sur l'entrée
+
+                // displayConsoleOutput(taskId, taskText.textContent);
+                await TaskToDatabase(taskId, taskText.textContent);
+
             });
+
+            /////////////////////////////////////////////////////////////////////
 
             // appels de données pour les routes
-            async function TaskToDatabase(taskId, taskText) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-                formData.append('taskText', taskText);
-
+            const TaskToDatabase = async (taskId, taskText) => {
                 try {
-                    const response = await fetch('/addtache', {
-                        method: 'post',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/add`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            taskText: taskText,
+                        }),
                     });
                     if (response.ok) {
                         console.log('Tâche ajoutée avec succès à la base de données.');
@@ -313,20 +313,19 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function updateTaskDeadlineInputToDatabase(taskId, taskDeadlineInput) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-                formData.append('taskDeadlineInput', taskDeadlineInput);
-
+            const updateTaskDeadlineInputToDatabase = async (taskId, taskDeadlineInput) => {
                 try {
-                    const response = await fetch('/updatetache', {
-                        method: 'put',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/updeadline`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ taskDeadlineInput }),
                     });
                     if (response.ok) {
-                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        console.log('DeadLine de la tâche ajoutée avec succès à la base de données.');
                         // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
                     } else {
                         console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
@@ -334,20 +333,19 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function updateTaskNotesToDatabase(taskId, taskNotes) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-                formData.append('taskNotes', taskNotes);
-
+            const updateTaskNotesToDatabase = async (taskId, taskNotes) => {
                 try {
-                    const response = await fetch('/upnotetache', {
-                        method: 'put',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/upnotes`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ taskNotes }),
                     });
                     if (response.ok) {
-                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        console.log('Notes de la tâche ajoutée avec succès à la base de données.');
                         // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
                     } else {
                         console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
@@ -355,20 +353,19 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function updateTaskPriorityToDatabase(taskId, taskPriority) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-                formData.append('taskPriority', taskPriority);
-
+            const updateTaskPriorityToDatabase = async (taskId, taskPriority) => {
                 try {
-                    const response = await fetch('/uppriotache', {
-                        method: 'put',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/uppriority`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ taskPriority }),
                     });
                     if (response.ok) {
-                        console.log('Tâche ajoutée avec succès à la base de données.');
+                        console.log('Priorité de la tâche ajoutée avec succès à la base de données.');
                         // Réalisez les actions nécessaires après l'ajout de la tâche, par exemple, actualiser l'affichage des tâches
                     } else {
                         console.error('Erreur lors de l\'ajout de la tâche:', response.statusText);
@@ -376,16 +373,18 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function validateTaskInDatabase(taskId) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-
+            const validateTaskInDatabase = async (taskId) => {
                 try {
-                    const response = await fetch('/valider-tache', {
-                        method: 'put',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/check`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            completed: true,
+                        }),
                     });
                     if (response.ok) {
                         console.log('Tâche validée avec succès dans la base de données.');
@@ -396,17 +395,40 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function updateTaskNameInDatabase(taskId, newTaskText) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-                formData.append('newTaskText', newTaskText);
-
+            const unvalidateTaskInDatabase = async (taskId) => {
                 try {
-                    const response = await fetch('/modifier-nom-tache', {
-                        method: 'put',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/uncheck`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            completed: false,
+                        }),
+                    });
+                    if (response.ok) {
+                        console.log('Tâche dévalidée avec succès dans la base de données.');
+                        // Réalisez les actions nécessaires après la validation de la tâche, par exemple, actualiser l'affichage des tâches
+                    } else {
+                        console.error('Erreur lors de la dévalidation de la tâche:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la requête:', error.message);
+                }
+            };
+
+            const updateTaskNameInDatabase = async (taskId, newTaskText) => {
+                try {
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/uptask`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            newTaskText: newTaskText,
+                        }),
                     });
                     if (response.ok) {
                         console.log('Tâche modifiée avec succès dans la base de données.');
@@ -417,16 +439,12 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
 
-            async function deleteTaskFromDatabase(taskId) {
-                const formData = new FormData();
-                formData.append('taskId', taskId);
-
+            const deleteTaskFromDatabase = async (taskId) => {
                 try {
-                    const response = await fetch('/supprimer-tache', {
-                        method: 'delete',
-                        body: formData
+                    const response = await fetch(`http://localhost:3000/task/${taskId}/delete`, {
+                        method: 'DELETE',
                     });
                     if (response.ok) {
                         console.log('Tâche supprimée avec succès de la base de données.');
@@ -437,7 +455,7 @@
                 } catch (error) {
                     console.error('Erreur lors de la requête:', error.message);
                 }
-            }
+            };
         });
     </script>
 </body>
