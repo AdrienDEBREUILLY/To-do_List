@@ -28,9 +28,9 @@
         <form id="login-form" class="bg-white p-6 rounded shadow-md max-w-sm mx-auto">
             <!-- Champ d'e-mail -->
             <div class="mb-4">
-                <label for="email" class="block text-gray-700">Email:</label>
+                <label for="username" class="block text-gray-700">Username:</label>
                 <!-- Champ pour saisir l'e-mail -->
-                <input type="email" id="email" class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="text" id="username" class="w-full p-2 border border-gray-300 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
             <!-- Champ de mot de passe -->
             <div class="mb-4">
@@ -49,26 +49,49 @@
     </div>
     <!-- Script JavaScript pour la logique de connexion -->
     <script>
+        // Attendre que le DOM soit entièrement chargé
         document.addEventListener('DOMContentLoaded', () => {
-            // Sélection du formulaire de connexion
+            // Sélectionner le formulaire de login par son identifiant
             const loginForm = document.getElementById('login-form');
 
-            // Événement lors de la soumission du formulaire
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // Empêche la soumission du formulaire par défaut
+            // Ajouter un événement de soumission au formulaire
+            loginForm.addEventListener('submit', async (e) => {
+                // Empêcher la soumission par défaut du formulaire
+                e.preventDefault();
 
-                // Récupération des valeurs des champs email et mot de passe
-                const email = document.getElementById('email').value;
+                // Récupérer les valeurs saisies par l'utilisateur dans les champs username et mot de passe
+                const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
 
-                // Vous pouvez vérifier les informations d'identification ici
-                // Par exemple, vérifier si elles correspondent à celles enregistrées dans votre base de données
-                // Ceci doit être fait côté serveur
+                try {
+                    // Envoyer une requête POST au serveur avec les informations de connexion
+                    const response = await fetch('http://localhost:3000/login', {
+                        method: 'post', // Utiliser la méthode POST
+                        headers: { 'Content-Type': 'application/json' }, // Définir le type de contenu
+                        body: JSON.stringify({ username, password }) // Convertir les données en JSON
+                    });
 
-                // Une fois les informations d'identification vérifiées avec succès, redirigez l'utilisateur vers index.html
-                window.location.href = './index.html';
+                    // Convertir la réponse en format JSON
+                    const data = await response.json();
+
+                    // Vérifier si la réponse du serveur est OK (statut 200)
+                    if (response.ok) {
+                        // Stocker le token reçu dans le localStorage du navigateur
+                        localStorage.setItem('token', data.token);
+                        // Rediriger l'utilisateur vers la page d'accueil
+                        window.location.href = './index.html';
+                    } else {
+                        // Afficher un message d'erreur si les informations de connexion sont incorrectes
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    // Afficher un message d'erreur en cas de problème avec la requête
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue. Veuillez réessayer.');
+                }
             });
         });
+
     </script>
 </body>
 </html>

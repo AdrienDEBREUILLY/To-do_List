@@ -1,6 +1,7 @@
 // Importer les modules nécessaires
 const cors = require('cors');
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const app = express();
@@ -176,11 +177,8 @@ app.delete('/task/:id/delete', async (req, res) => {
 // Route pour ajouter un utilisateur
 app.post('/signup', async (req, res) => {
     const { username } = req.body;
-    console.log(`UserName: ${username}`);
     const { email } = req.body;
-    console.log(`email: ${email}`);
     const { password } = req.body;
-    console.log(`password: ${password}`);
     const sql = 'INSERT INTO user (username, email, password) VALUES (?, ?, ?);';
     try {
         // Hacher le mot de passe
@@ -205,8 +203,43 @@ app.post('/signup', async (req, res) => {
 });
 
 ///////////////////////////////////////////////////////////////////// login.html <=> serv.js
+const secretKey = 'k4zh684bfcidfr4g6j5253g6869lkdbrsd58jf64df6h5g64';
+// Route pour vérifier les informations de connexion
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
 
+    // Requête SQL pour obtenir l'utilisateur avec le nom d'utilisateur fourni
+    const sql = 'SELECT * FROM user WHERE username = ?';
 
+    // Requête à la base de données
+    db.query(sql, [username], async (err, results) => {
+        if (err) {
+            console.error('Erreur lors de la vérification de l\'utilisateur :', err);
+            return res.status(500).send('Erreur serveur lors de la vérification de l\'utilisateur');
+        }
+
+        if (results.length === 0) {
+            // Si aucun utilisateur n'est trouvé avec ce nom d'utilisateur
+            return res.status(400).send('Nom d\'utilisateur ou mot de passe incorrect');
+        }
+
+        const user = results[0];
+
+        // Comparer le mot de passe fourni avec le mot de passe haché dans la base de données
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            // Si le mot de passe ne correspond pas
+            return res.status(400).send('Nom d\'utilisateur ou mot de passe incorrect');
+        }
+
+        // Si le mot de passe correspond, créer un token (par exemple JWT, ici un simple message)
+        const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '1h' });
+
+        // Retourner une réponse positive avec le token
+        res.status(200).json({ message: 'Connexion réussie', token });
+    });
+});
 
 ///////////////////////////////////////////////////////////////////// serv.js => index.html
 

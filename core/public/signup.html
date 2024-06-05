@@ -113,6 +113,10 @@
 
                         if (response.ok) {
                             document.getElementById('form-success').textContent = 'Inscription réussie !';
+                            // Rediriger l'utilisateur vers la page de connexion après 3 secondes
+                            setTimeout(() => {
+                                window.location.href = './login.html';
+                            }, 3000);
                         } else {
                             document.getElementById('form-error').textContent = 'Erreur lors de l\'inscription : ' + response.statusText;
                         }
