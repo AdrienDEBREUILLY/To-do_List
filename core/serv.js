@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const app = express();
 const port = 3000;
+const secretKey = 'k4zh684bfcidfr4g6j5253g6869lkdbrsd58jf64df6h5g64';
 
 // Utiliser CORS et express middleware / pour analyser cors des requête post
 app.use(cors());
@@ -34,6 +35,8 @@ db.connect((err) => {
 // Route pour ajouter une tâche à la base de données
 app.post('/task/:id/add', async (req, res) => {
     const taskId = req.params.id;
+    //const userId = req.user.userId;
+    //console.log(`id_user: ${userId}`);
     const { taskText } = req.body;
     const sql = 'INSERT INTO Task (id_task, titre) VALUES (?, ?);';
     // Insérer les données de la tâche dans la base de données
@@ -120,7 +123,7 @@ app.put('/task/:id/check', async (req, res) => {
         });
 });
 
-// Route pour valider une tâche dans la base de données
+// Route pour dévalider une tâche dans la base de données
 app.put('/task/:id/uncheck', async (req, res) => {
     const taskId = req.params.id;
     const sql = 'UPDATE Task SET status = FALSE WHERE id_task = ?';
@@ -183,7 +186,6 @@ app.post('/signup', async (req, res) => {
     try {
         // Hacher le mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log(`HashPassword: ${hashedPassword}`);
         // Ajouter l'utilisateur à la base de données
         db.query(sql, [username, email, hashedPassword], (err, result) => {
             if (err) {
@@ -203,7 +205,7 @@ app.post('/signup', async (req, res) => {
 });
 
 ///////////////////////////////////////////////////////////////////// login.html <=> serv.js
-const secretKey = 'k4zh684bfcidfr4g6j5253g6869lkdbrsd58jf64df6h5g64';
+
 // Route pour vérifier les informations de connexion
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -243,18 +245,21 @@ app.post('/login', async (req, res) => {
 
 ///////////////////////////////////////////////////////////////////// serv.js => index.html
 
-// Récupérer toutes les tâches
-app.get('/gettask', async (req, res) => {
-    const sql = 'SELECT * FROM Task';
-    db.query(sql, (err, result) => {
+// Récupérer toutes les tâches de l'utilisateur actuellement connecté
+app.get('/gettasks', async (req, res) => {
+    const userId = req.user.userId; // Obtenez l'identifiant de l'utilisateur à partir du token JWT
+    const sql = 'SELECT * FROM Task WHERE id_user = ?';
+    db.query(sql, [userId], (err, result) => {
         if (err) {
-            console.error('Erreur lors de la récupération des tâches à partir de la base de données:', err);
-            res.status(500).send('Erreur lors de la récupération des tâches à partir de la base de données');
+            console.error('Erreur lors de la récupération des tâches de l\'utilisateur :', err);
+            res.status(500).send('Erreur lors de la récupération des tâches');
             return;
         }
         res.status(200).json(result);
     });
 });
+
+/////////////////////////////////////////////////////////////////////
 
 // Démarrer le serveur
 app.listen(port, () => {
