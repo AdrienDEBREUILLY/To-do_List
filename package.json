@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i ./src/styles.css -o ./dist/styles.css",
-    "watch:css": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch"
+    "build:css": "tailwindcss -i ./core/public/css/styles.css -o ./dist/styles.css",
+    "buildw:css": "tailwindcss -i ./core/public/css/styles.css -o ./dist/styles.css --watch"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
     "mysql2": "^3.10.0",
     "npm": "^10.8.1",
     "npm-check-updates": "^16.14.20",
+    "path": "^0.12.7",
     "tailwindcss": "^3.4.4"
   }
 }

@@ -6,18 +6,7 @@
     <!-- Inclusion de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Logout</title>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Logique de déconnexion ici, par exemple:
-            // sessionStorage.clear();
-            localStorage.clear();
-            // Ajout d'un délai de 2 secondes avant la redirection
-            setTimeout(() => {
-                // Rediriger vers la page de connexion
-                window.location.href = 'login.html';
-            }, 3000); // 2000 millisecondes = 2 secondes
-        });
-    </script>
+    <script src="./js/logout.js"></script>
 </head>
 <body class="h-screen flex-row justify-center items-center">
     <div class="text-center">

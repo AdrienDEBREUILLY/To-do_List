@@ -1,12 +1,23 @@
 // Importer les modules nécessaires
 const cors = require('cors');
 const express = require('express');
+// const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const app = express();
 const port = 3000;
 const secretKey = 'k4zh684bfcidfr4g6j5253g6869lkdbrsd58jf64df6h5g64';
+
+/* bloc de connexion de dossier pour tailwincss
+// Servir les fichiers statiques du répertoire 'core/public'
+app.use(express.static(path.join(__dirname, 'public')));
+// Servir les fichiers du répertoire dist situé à la racine du projet
+app.use('/dist', express.static(path.join(__dirname, '..', '..','dist')));
+// Route pour l'index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});*/
 
 // Utiliser CORS et express middleware / pour analyser cors des requête post
 app.use(cors());
@@ -30,18 +41,32 @@ db.connect((err) => {
     console.log('Connecté à la base de données MySQL');
 });
 
+// Middleware pour vérifier le token JWT et extraire l'utilisateur
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token == null) return res.sendStatus(401); // Si le token est absent
+
+    jwt.verify(token, secretKey, (err, user) => {
+        if (err) return res.sendStatus(403); // Si le token est invalide
+
+        req.user = user; // Assigne l'utilisateur extrait du token à req.user
+        next(); // Passe au prochain middleware ou route
+    });
+}
+
 ///////////////////////////////////////////////////////////////////// index.html => serv.js
 
 // Route pour ajouter une tâche à la base de données
-app.post('/task/:id/add', async (req, res) => {
+app.post('/task/:id/add', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
-    //const userId = req.user.userId;
-    //console.log(`id_user: ${userId}`);
+    const userId = req.user.username;
     const { taskText } = req.body;
-    const sql = 'INSERT INTO Task (id_task, titre) VALUES (?, ?);';
+    const sql = 'INSERT INTO Task (id_task, titre, id_user) VALUES (?, ?, ?);';
     // Insérer les données de la tâche dans la base de données
     // Vous devrez adapter cette requête en fonction de votre schéma de base de données
-    db.query(sql, [taskId, taskText],
+    db.query(sql, [taskId, taskText, userId],
         (err, result) => {
             if (err) {
                 console.error('Erreur lors de l\'insertion de la tâche : ', err);
@@ -53,7 +78,7 @@ app.post('/task/:id/add', async (req, res) => {
 });
 
 // mise à jour de la date
-app.put('/task/:id/updeadline', async (req, res) => {
+app.put('/task/:id/updeadline', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const { taskDeadlineInput } = req.body;
     const sql = 'UPDATE Task SET date_echeance = ? WHERE id_task = ?;';
@@ -71,7 +96,7 @@ app.put('/task/:id/updeadline', async (req, res) => {
 });
 
 // ajout de la note
-app.put('/task/:id/upnotes', async (req, res) => {
+app.put('/task/:id/upnotes', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const { taskNotes} = req.body;
     const sql = 'UPDATE Task SET description = ? WHERE id_task = ?;';
@@ -89,7 +114,7 @@ app.put('/task/:id/upnotes', async (req, res) => {
 });
 
 // ajout de la priorité
-app.put('/task/:id/uppriority', async (req, res) => {
+app.put('/task/:id/uppriority', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const { taskPriority } = req.body;
     const sql = 'UPDATE Task SET priorite = ? WHERE id_task = ?;';
@@ -107,7 +132,7 @@ app.put('/task/:id/uppriority', async (req, res) => {
 });
 
 // Route pour valider une tâche dans la base de données
-app.put('/task/:id/check', async (req, res) => {
+app.put('/task/:id/check', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const sql = 'UPDATE Task SET status = TRUE WHERE id_task = ?';
     // Mettre à jour l'état de la tâche dans la base de données pour la marquer comme validée
@@ -124,7 +149,7 @@ app.put('/task/:id/check', async (req, res) => {
 });
 
 // Route pour dévalider une tâche dans la base de données
-app.put('/task/:id/uncheck', async (req, res) => {
+app.put('/task/:id/uncheck', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const sql = 'UPDATE Task SET status = FALSE WHERE id_task = ?';
     // Mettre à jour l'état de la tâche dans la base de données pour la marquer comme validée
@@ -141,7 +166,7 @@ app.put('/task/:id/uncheck', async (req, res) => {
 });
 
 // Route pour modifier le nom d'une tâche dans la base de données
-app.put('/task/:id/uptask', async (req, res) => {
+app.put('/task/:id/uptask', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const { newTaskText } = req.body;
     const sql = 'UPDATE Task SET titre = ? WHERE id_task = ?';
@@ -159,7 +184,7 @@ app.put('/task/:id/uptask', async (req, res) => {
 });
 
 // Route pour supprimer une tâche de la base de données
-app.delete('/task/:id/delete', async (req, res) => {
+app.delete('/task/:id/delete', authenticateToken, async (req, res) => {
     const taskId = req.params.id;
     const sql = 'DELETE FROM Task WHERE id_task = ?';
     // Supprimer la tâche de la base de données
@@ -236,7 +261,7 @@ app.post('/login', async (req, res) => {
         }
 
         // Si le mot de passe correspond, créer un token (par exemple JWT, ici un simple message)
-        const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user.id, username: user.username }, secretKey, { expiresIn: '1h' });
 
         // Retourner une réponse positive avec le token
         res.status(200).json({ message: 'Connexion réussie', token });
