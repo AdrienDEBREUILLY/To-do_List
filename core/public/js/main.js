@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token'); // récupération du token si il y a
+    const token = localStorage.getItem('token');// récupération du token si il y a
     
     if (!token) {
         // Rediriger vers la page de login si l'utilisateur n'est pas connecté
@@ -13,6 +13,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskList = document.getElementById('task-list');
     const newTaskInput = document.getElementById('new-task');
     const completedTaskList = document.getElementById('completed-task-list');
+
+    /////////////////////////////////////////////////////////////////////
+
+    // Fonction pour inclure le token JWT dans les en-têtes
+    const getHeaders = () => {
+        const token = localStorage.getItem('token');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    };
+
+    const generateTaskId = () => {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+    };
 
     // Fonction pour définir la couleur de fond en fonction de la priorité
     const setBackgroundColor = (task) => {
@@ -46,63 +61,42 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
-    const generateTaskId = () => {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-    };
-    
-    // Fonction pour inclure le token JWT dans les en-têtes
-    const getHeaders = () => {
-        const token = localStorage.getItem('token');
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    };
-
-    // Fonction pour afficher les données consolées dans l'élément div
-    //const displayConsoleOutput = (taskId, taskText, taskDeadlineInput, taskNotes, taskPriority) => {
-    //    const consoleOutputContent = document.getElementById('console-output-content');
-    //    const outputHTML = `
-    //        <p><strong>Task ID:</strong> ${taskId}</p>
-    //        <p><strong>Task Text:</strong> ${taskText}</p>
-    //        <p><strong>Task Deadline:</strong> ${taskDeadlineInput}</p>
-    //        <p><strong>Task Notes:</strong> ${taskNotes}</p>
-    //        <p><strong>Task Priority:</strong> ${taskPriority}</p>
-    //        <hr>
-    //    `;
-    //    consoleOutputContent.innerHTML += outputHTML;
-    //};
-
     // Supprimer une tâche
     const deleteTask = (task) => {
         task.remove();
     };
 
-    // Ajouter une nouvelle tâche
-    document.querySelector('form').addEventListener('submit', async (e) => {
-        e.preventDefault(); // Empêcher le comportement par défaut du formulaire
-        if (!newTaskInput.value.trim()) return; // Vérifier si le champ de saisie est vide
+    //////////////////////////////////
 
-        const taskId = generateTaskId();  // Générer un identifiant unique
+    // Fonction pour ajouter une tâche au DOM
+    const addTaskToDOM = (task) => {
+        const taskId = task.id_task || generateTaskId();
+        const taskText = task.titre || task.taskText;
+        console.log('Adding task to DOM:', taskText);
+        const taskPriority = task.priorite || 'default';
+        const taskDeadline = task.date_echeance || '';
+        const taskNotes = task.description || '';
+        const taskStatus = task.status || false;
 
         // Création de l'élément de tâche
-        const task = document.createElement('li');
-        task.className = 'bg-white p-3 my-2 rounded shadow-md flex justify-between items-center';
-        task.setAttribute('data-id', taskId);
-
-        // Création des éléments de la tâche (texte, boutons, etc.)
-        const taskContent = document.createElement('div');
-        taskContent.className = 'flex-1';
+        const taskElement = document.createElement('li');
+        taskElement.className = 'bg-white p-3 my-2 rounded shadow-md flex justify-between items-center';
+        taskElement.setAttribute('data-id', taskId);
 
         // Création de la case à cocher
         const taskCheckbox = document.createElement('input');
         taskCheckbox.type = 'checkbox';
         taskCheckbox.className = 'w-4 h-4 border border-gray-400 rounded cursor-pointer flex-shrink-0 mr-2';
+        if (taskStatus) {
+            taskCheckbox.checked = true;
+            taskElement.classList.add('line-through');
+            taskElement.style.backgroundColor = '#b3ffb3';
+        }
 
         // Création du texte de la tâche
-        const taskText = document.createElement('span');
-        taskText.textContent = newTaskInput.value.trim();
-        taskText.className = 'flex-1';
+        const taskTextElement = document.createElement('span');
+        taskTextElement.textContent = taskText;
+        taskTextElement.className = 'flex-1';
 
         // Création du bouton pour les notes
         const taskNotesButton = document.createElement('button');
@@ -110,37 +104,28 @@ document.addEventListener('DOMContentLoaded', () => {
         taskNotesButton.textContent = 'notes';
 
         // Création de la zone de notes
-        const taskNotes = document.createElement('textarea');
-        taskNotes.className = 'py-1 px-2 rounded mr-2';
-        taskNotes.style.display = 'none'; // Initialement cachée
-        taskNotes.placeholder = 'Add notes...';
-
-        // Création du conteneur pour les boutons
-        const taskButtons = document.createElement('div');
-        taskButtons.className = 'flex';
-
-        // Création du conteneur pour le bouton Note
-        const taskButtonsNotes = document.createElement('div');
-        taskButtonsNotes.className = 'flex';
-
-        // Création du conteneur pour le bouton Edit
-        const taskButtonsEdit = document.createElement('div');
-        taskButtonsEdit.className = 'flex';
+        const taskNotesElement = document.createElement('textarea');
+        taskNotesElement.className = 'py-1 px-2 rounded mr-2';
+        taskNotesElement.style.display = 'none';
+        taskNotesElement.placeholder = 'Add notes...';
+        taskNotesElement.value = taskNotes || '';
 
         // Création du champ pour la date de deadline
         const taskDeadlineInput = document.createElement('input');
         taskDeadlineInput.type = 'date';
         taskDeadlineInput.className = 'py-1 px-2 border border-gray-300 rounded mr-2';
+        taskDeadlineInput.value = taskDeadline || '';
 
         // Création de la liste déroulante pour la priorité
-        const taskPriority = document.createElement('select');
-        taskPriority.className = 'text-black py-1 px-2 rounded mr-2';
-        taskPriority.innerHTML = `
+        const taskPrioritySelect = document.createElement('select');
+        taskPrioritySelect.className = 'text-black py-1 px-2 rounded mr-2';
+        taskPrioritySelect.innerHTML = `
             <option value="default">default</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
         `;
+        taskPrioritySelect.value = taskPriority || 'default';
 
         // Création du bouton pour l'édition de la tâche
         const taskEditButton = document.createElement('button');
@@ -152,118 +137,156 @@ document.addEventListener('DOMContentLoaded', () => {
         taskDeleteButton.className = 'bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600';
         taskDeleteButton.textContent = 'delete';
 
-        // Ajout des éléments à la tâche
-        task.appendChild(taskCheckbox);
-        task.appendChild(taskText);
-        task.appendChild(taskButtons);
-        taskButtons.appendChild(taskPriority);
+        // Création du conteneur pour les boutons
+        const taskButtons = document.createElement('div');
+        taskButtons.className = 'flex';
+        taskButtons.appendChild(taskPrioritySelect);
         taskButtons.appendChild(taskDeadlineInput);
-        taskButtons.appendChild(taskNotes);
-        taskButtonsNotes.appendChild(taskNotesButton);
-        taskButtons.appendChild(taskButtonsNotes)
-        taskButtonsEdit.appendChild(taskEditButton);
-        taskButtons.appendChild(taskButtonsEdit)
+        taskButtons.appendChild(taskNotesElement);
+        taskButtons.appendChild(taskNotesButton);
+        taskButtons.appendChild(taskEditButton);
         taskButtons.appendChild(taskDeleteButton);
-        taskList.appendChild(task);
 
-        // Définir la couleur de fond en fonction de la priorité
-        setBackgroundColor(task)
+        // Ajout des éléments à la tâche
+        taskElement.appendChild(taskCheckbox);
+        taskElement.appendChild(taskTextElement);
+        taskElement.appendChild(taskButtons);
 
-        // Ajout d'un événement pour changer la priorité
-        taskPriority.addEventListener('change', async () => {
-            setBackgroundColor(task);
+        // Ajouter la tâche à la liste appropriée
+        if (taskStatus) {
+            completedTaskList.appendChild(taskElement);
+        } else {
+            taskList.appendChild(taskElement);
+        }
+
+        // Ajout des événements
+        taskCheckbox.addEventListener('change', async (e) => {
+            const dateInput = taskDeadlineInput;
+            const textarea = taskNotesElement;
+
+            if (e.target.checked) { // checked
+                taskElement.classList.toggle('line-through');
+                taskElement.style.backgroundColor = '#b3ffb3';
+                taskPrioritySelect.value = 'default';
+                taskPrioritySelect.disabled = true;
+                dateInput.disabled = true;
+                textarea.disabled = true;
+                taskElement.setAttribute('data-completed', 'true');
+                completedTaskList.appendChild(taskElement);
+                await validateTaskInDatabase(taskId);
+            } else { // unchecked
+                taskElement.classList.remove('line-through');
+                taskElement.style.backgroundColor = '';
+                taskPrioritySelect.disabled = false;
+                dateInput.disabled = false;
+                textarea.disabled = false;
+                taskElement.removeAttribute('data-completed');
+                taskList.appendChild(taskElement);
+                await unvalidateTaskInDatabase(taskId);
+            }
+        });
+
+        taskPrioritySelect.addEventListener('change', async () => {
+            setBackgroundColor(taskElement);
             sortTasks();
-            //displayConsoleOutput(taskId, '', '', '', taskPriority.value);
-            await updateTaskPriorityToDatabase(taskId, taskPriority.value);
+            await updateTaskPriorityToDatabase(taskId, taskPrioritySelect.value);
         });
 
-        // Ajout d'un événement pour écrire une note / description
-        taskNotes.addEventListener('input', async () => {
-            //displayConsoleOutput(taskId, '', '', taskNotes.value, '');
-            await updateTaskNotesToDatabase(taskId, taskNotes.value);
+        taskNotesElement.addEventListener('input', async () => {
+            await updateTaskNotesToDatabase(taskId, taskNotesElement.value);
         });
 
-        // Ajout d'un événement pour mettre une deadline
         taskDeadlineInput.addEventListener('change', async () => {
-            //displayConsoleOutput(taskId, '', taskDeadlineInput.value, '', '');
             await updateTaskDeadlineInputToDatabase(taskId, taskDeadlineInput.value);
         });
 
-        // Validation d'une tâche
-        taskCheckbox.addEventListener('change', async (e) => {
-            const taskId = task.getAttribute('data-id');
-            const dateInput = task.querySelector('input[type="date"]');
-            const textarea = task.querySelector('textarea');
-
-            if (e.target.checked) { // checked
-                task.classList.toggle('line-through');
-                task.style.backgroundColor = '#b3ffb3'; // Ajout du fond vert aux tâches validées
-                task.querySelector('select').value = 'default'; // Réinitialiser la priorité à "default"
-                task.querySelector('select').disabled = true; // Désactiver la sélection de priorité
-                if (dateInput !== null) {dateInput.disabled = true;} // Désactiver la sélection de date
-                if (textarea !== null) {textarea.disabled = true;} // Désactiver la zone text des notes
-                task.setAttribute('data-completed', 'true'); // Marquer la tâche comme terminée
-                completedTaskList.appendChild(task); // Déplacer la tâche vers la liste des tâches terminées
-                await validateTaskInDatabase(taskId);
-
-            } else { // unchecked
-                task.classList.remove('line-through');
-                task.style.backgroundColor = ''; // Retirer le fond vert si la tâche n'est plus validée
-                task.querySelector('select').disabled = false; // Réactiver la sélection de priorité
-                if (dateInput !== null) {dateInput.disabled = false;} // Réactiver la sélection de date
-                if (textarea !== null) {task.querySelector('textarea').disabled = false;}// Réactiver la zone text des notes
-                task.removeAttribute('data-completed'); // Supprimer la marque de la tâche comme terminée
-                taskList.appendChild(task); // Déplacer la tâche vers la liste des tâches en cours
-                await unvalidateTaskInDatabase(taskId)
-            }
-        });
-
-        // Toggle pour afficher/masquer les notes
         taskNotesButton.addEventListener('click', () => {
-            taskNotes.style.display = taskNotes.style.display === 'none' ? 'block' : 'none';
-            taskButtonsNotes.appendChild(taskNotesButton);
+            taskNotesElement.style.display = taskNotesElement.style.display === 'none' ? 'block' : 'none';
         });
 
-        // Modifier le nom d'une tâche
         taskEditButton.addEventListener('click', async () => {
-            const newTaskText = prompt('Enter the new task text:');
-            const isCompleted = task.getAttribute('data-completed');
-            if (isCompleted !== 'true') {
-                if (newTaskText) {
-                    taskText.textContent = newTaskText;
-                    await updateTaskNameInDatabase(taskId, newTaskText);
-                    taskButtonsEdit.appendChild(taskEditButton);
-                }else{
-                    console.log('Cette édition ne peut être faite car la tache et validé.');
-                }
+            const newTaskText = prompt('Enter the new task text:', taskTextElement.textContent);
+            const isCompleted = taskElement.getAttribute('data-completed');
+            if (isCompleted !== 'true' && newTaskText) {
+                taskTextElement.textContent = newTaskText;
+                await updateTaskNameInDatabase(taskId, newTaskText);
+            } else {
+                console.log('Cette édition ne peut être faite car la tâche est validée.');
             }
         });
 
-        // Supprimer une tâche uniquement de la liste des tâches terminées
         taskDeleteButton.addEventListener('click', async () => {
-            const isCompleted = task.getAttribute('data-completed');
+            const isCompleted = taskElement.getAttribute('data-completed');
             if (isCompleted === 'true') {
-                deleteTask(task);
+                deleteTask(taskElement);
                 await deleteTaskFromDatabase(taskId);
-                taskButtons.appendChild(taskDeleteButton);
-            }else{
-                // Affiche un message ou empêchez la suppression de la tâche dans la liste des tâches à faire
+            } else {
                 console.log('Cette tâche ne peut être supprimée car elle n\'est pas terminée.');
             }
         });
 
+        setBackgroundColor(taskElement);
+    };
+
+    //////////////////////////////////
+
+    // Fonction pour récupérer les tâches de l'utilisateur
+    const fetchTasks = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/gettasks', {
+                method: 'GET',
+                headers: getHeaders(), // Inclure le token JWT
+            });
+            if (response.ok) {
+                const tasks = await response.json();
+                if (tasks.length === 0) {
+                    console.log('Aucune tâche trouvée pour cet utilisateur.');
+                } else {
+                    tasks.forEach(task => addTaskToDOM(task));
+                }
+            } else {
+                console.error('Erreur lors de la récupération des tâches:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la requête:', error.message);
+        }
+    };
+
+    //////////////////////////////////
+
+    // Appel de la fonction pour récupérer les tâches
+    fetchTasks();
+
+    //////////////////////////////////
+
+    // Ajouter une nouvelle tâche
+    document.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Empêcher le comportement par défaut du formulaire
+        if (!newTaskInput.value.trim()) return; // Vérifier si le champ de saisie est vide
+
+        const task = {
+            id_task: generateTaskId(),
+            titre: newTaskInput.value.trim(),
+            priorite: 'default',
+            date_echeance: '',
+            description: '',
+            status: false
+        };
+
+        console.log('Creating new task:', task.titre);
+        addTaskToDOM(task);
+
         newTaskInput.value = ''; // Réinitialiser la valeur de l'entrée
         newTaskInput.focus(); // Focus sur l'entrée
 
-        // displayConsoleOutput(taskId, taskText.textContent);
-        await TaskToDatabase(taskId, taskText.textContent);
-
+        await TaskToDatabase(task.id_task, task.titre);
     });
 
     /////////////////////////////////////////////////////////////////////
 
     // appels de données pour les routes
     const TaskToDatabase = async (taskId, taskText) => {
+        console.log('Task to be sent to database:', taskText);
         try {
             const response = await fetch(`http://localhost:3000/task/${taskId}/add`, {
                 method: 'POST',

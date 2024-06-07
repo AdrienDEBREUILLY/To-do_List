@@ -271,8 +271,8 @@ app.post('/login', async (req, res) => {
 ///////////////////////////////////////////////////////////////////// serv.js => index.html
 
 // Récupérer toutes les tâches de l'utilisateur actuellement connecté
-app.get('/gettasks', async (req, res) => {
-    const userId = req.user.userId; // Obtenez l'identifiant de l'utilisateur à partir du token JWT
+app.get('/gettasks', authenticateToken, async (req, res) => {
+    const userId = req.user.username; // Obtenez l'identifiant de l'utilisateur à partir du token JWT
     const sql = 'SELECT * FROM Task WHERE id_user = ?';
     db.query(sql, [userId], (err, result) => {
         if (err) {
