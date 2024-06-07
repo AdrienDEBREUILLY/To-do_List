@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token'); // récupération du token si il y a
     
+    if (!token) {
+        // Rediriger vers la page de login si l'utilisateur n'est pas connecté
+        window.location.href='login.html';
+    }else{
+        // Afficher un message en console si l'utilisateur est connecté
+        console.log('Utilisateur connecté.');
+    }
+
     // Sélection des éléments du DOM nécessaires
     const taskList = document.getElementById('task-list');
     const newTaskInput = document.getElementById('new-task');
