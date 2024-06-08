@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addTaskToDOM = (task) => {
         const taskId = task.id_task || generateTaskId();
         const taskText = task.titre || task.taskText;
-        console.log('Adding task to DOM:', taskText);
         const taskPriority = task.priorite || 'default';
         const taskDeadline = task.date_echeance || '';
         const taskNotes = task.description || '';
@@ -273,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
             status: false
         };
 
-        console.log('Creating new task:', task.titre);
         addTaskToDOM(task);
 
         newTaskInput.value = ''; // Réinitialiser la valeur de l'entrée
@@ -286,7 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // appels de données pour les routes
     const TaskToDatabase = async (taskId, taskText) => {
-        console.log('Task to be sent to database:', taskText);
         try {
             const response = await fetch(`http://localhost:3000/task/${taskId}/add`, {
                 method: 'POST',
